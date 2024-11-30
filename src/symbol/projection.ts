@@ -219,7 +219,7 @@ export function updateLineLabels(bucket: SymbolBucket,
     viewportHeight: number,
     translation: [number, number],
     getElevation: (x: number, y: number) => number) {
-
+    console.log('---- in updateLineLabels')
     const sizeData = isText ? bucket.textSizeData : bucket.iconSizeData;
     const partiallyEvaluatedSize = symbolSize.evaluateSizeForZoom(sizeData, painter.transform.zoom);
 
@@ -271,6 +271,7 @@ export function updateLineLabels(bucket: SymbolBucket,
 
         // Don't bother calculating the correct point for invisible labels.
         if (!isVisible(anchorPos.point, clippingBuffer)) {
+            console.log(`  symbol not visible, hiding ${symbol}`)
             hideGlyphs(symbol.numGlyphs, dynamicLayoutVertexArray);
             continue;
         }
@@ -435,7 +436,7 @@ function placeGlyphsAlongLine(args: GlyphLinePlacementArgs): GlyphLinePlacementR
         aspectRatio,
         rotateToLine
     } = args;
-
+    console.log('---- in placeGlyphsAlongLine')
     const fontScale = fontSize / 24;
     const lineOffsetX = symbol.lineOffsetX * fontScale;
     const lineOffsetY = symbol.lineOffsetY * fontScale;
@@ -464,6 +465,8 @@ function placeGlyphsAlongLine(args: GlyphLinePlacementArgs): GlyphLinePlacementR
         }
 
         placedGlyphs = [firstAndLastGlyph.first];
+        console.log(`---- placing remaining ${glyphEndIndex - symbol.glyphStartIndex + 1} glyphs along line`)
+        console.log(projectionContext.lineVertexArray.)
         for (let glyphIndex = symbol.glyphStartIndex + 1; glyphIndex < glyphEndIndex - 1; glyphIndex++) {
             // Since first and last glyph fit on the line, we're sure that the rest of the glyphs can be placed
             placedGlyphs.push(placeGlyphAlongLine(fontScale * glyphOffsetArray.getoffsetX(glyphIndex), lineOffsetX, lineOffsetY, flip, symbol.segment,
@@ -787,6 +790,7 @@ export function placeGlyphAlongLine(
     projectionContext: SymbolProjectionContext,
     rotateToLine: boolean): PlacedGlyph | null {
 
+    console.log(`place glyph along line: ${offsetX} ${lineOffsetX} ${lineOffsetY} ${flip} ${anchorSegment} ${lineStartIndex} ${lineEndIndex} ${rotateToLine}`)
     const combinedOffsetX = flip ?
         offsetX - lineOffsetX :
         offsetX + lineOffsetX;
@@ -833,6 +837,8 @@ export function placeGlyphAlongLine(
     let currentLineSegment: Point;
     while (distanceFromAnchor + currentSegmentDistance <= absOffsetX) {
         currentIndex += direction;
+
+        console.log(`      ${currentIndex} | ${currentSegmentDistance} | ${absOffsetX}`)
 
         // offset does not fit on the projected line
         if (currentIndex < lineStartIndex || currentIndex >= lineEndIndex)

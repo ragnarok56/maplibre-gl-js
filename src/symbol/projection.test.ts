@@ -1,11 +1,28 @@
-import {describe, test, expect} from 'vitest';
-import {type SymbolProjectionContext, type ProjectionSyntheticVertexArgs, findOffsetIntersectionPoint, projectWithMatrix, transformToOffsetNormal, projectLineVertexToLabelPlane, getPitchedLabelPlaneMatrix, getGlCoordMatrix, getTileSkewVectors} from './projection';
+import {describe, test, expect, vi, Mock} from 'vitest';
+import {type SymbolProjectionContext, type ProjectionSyntheticVertexArgs, findOffsetIntersectionPoint, projectWithMatrix, transformToOffsetNormal, projectLineVertexToLabelPlane, getPitchedLabelPlaneMatrix, getGlCoordMatrix, getTileSkewVectors, updateLineLabels, placeGlyphAlongLine} from './projection';
 
 import Point from '@mapbox/point-geometry';
 import {mat4} from 'gl-matrix';
 import {SymbolLineVertexArray} from '../data/array_types.g';
 import {MercatorTransform} from '../geo/projection/mercator_transform';
 import {expectToBeCloseToArray} from '../util/test/util';
+import { Painter, RenderOptions } from '../render/painter';
+import { ProjectionData } from '../geo/projection/projection_data';
+import { IReadonlyTransform } from '../geo/transform_interface';
+import { SymbolLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { SymbolStyleLayer } from '../style/style_layer/symbol_style_layer';
+import { ZoomHistory } from '../style/zoom_history';
+import { EvaluationParameters } from '../style/evaluation_parameters';
+import { OverscaledTileID } from '../source/tile_id';
+import { Program } from '../render/program';
+import { SymbolBucket } from '../data/bucket/symbol_bucket';
+import { Tile } from '../source/tile';
+import { SourceCache } from '../source/source_cache';
+import { MercatorProjection } from '../geo/projection/mercator';
+import { Style } from '../style/style';
+import { pixelsToTileUnits } from '../source/pixels_to_tile_units';
+import { translatePosition } from '../util/util';
+import type {Map} from '../ui/map';
 
 describe('Projection', () => {
     test('matrix float precision', () => {
@@ -319,3 +336,140 @@ describe('Find offset line intersections', () => {
     });
 
 });
+
+vi.mock('./painter');
+vi.mock('./program');
+vi.mock('../source/source_cache');
+vi.mock('../source/tile');
+vi.mock('../data/bucket/symbol_bucket', () => {
+    return {
+        SymbolBucket: vi.fn()
+    };
+});
+
+describe('i dont know', () => {
+    test('placeGlyphAlongLine', () => {
+        const lineVertexArray = new SymbolLineVertexArray();
+        // A three point line along x axis, to origin, and then up y axis
+        lineVertexArray.emplaceBack(-10, 0, -10);
+        lineVertexArray.emplaceBack(0, 0, 0);
+        lineVertexArray.emplaceBack(0, 10, 10);
+
+        // A three point line along the x axis
+        lineVertexArray.emplaceBack(-10, 0, -10);
+        lineVertexArray.emplaceBack(0, 0, 0);
+        lineVertexArray.emplaceBack(10, 0, 10);
+        const transform = new MercatorTransform();
+
+        const projectionContext: SymbolProjectionContext = {
+            projectionCache: {projections: {}, offsets: {}, cachedAnchorPoint: undefined, anyProjectionOccluded: false},
+            lineVertexArray,
+            pitchedLabelPlaneMatrix: mat4.create(),
+            getElevation: (_x, _y) => 0,
+            tileAnchorPoint: new Point(0, 0),
+            transform,
+            pitchWithMap: true,
+            unwrappedTileID: null,
+            width: 1,
+            height: 1,
+            translation: [0, 0]
+        };
+        const r = placeGlyphAlongLine(20, 0, 0, false, 0, 0, 0, projectionContext, true)
+        console.log(r)
+    });
+    return;
+    test('something', () => {
+
+        const createMockTransform = () => {
+            return {
+                pitch: 0,
+                labelPlaneMatrix: mat4.create(),
+                getCircleRadiusCorrection: () => 1,
+                angle: 0,
+                zoom: 0,
+                getProjectionData(_canonical, fallback): ProjectionData {
+                    return {
+                        mainMatrix: fallback,
+                        tileMercatorCoords: [0, 0, 1, 1],
+                        clippingPlane: [0, 0, 0, 0],
+                        projectionTransition: 0.0,
+                        fallbackMatrix: fallback,
+                    };
+                },
+            } as any as IReadonlyTransform;
+        }
+
+        const painterMock = new Painter(null, null);
+        painterMock.context = {
+            gl: {},
+            activeTexture: {
+                set: () => { }
+            }
+        } as any;
+        painterMock.renderPass = 'translucent';
+        painterMock.transform = createMockTransform();
+        painterMock.options = {} as any;
+
+        const layerSpec = {
+            id: 'mock-layer',
+            source: 'empty-source',
+            type: 'symbol',
+            layout: {
+                'text-rotation-alignment': 'viewport-glyph',
+                'text-field': 'ABC',
+                'symbol-placement': 'line',
+            },
+            paint: {
+                'text-opacity': 1
+            }
+        } as SymbolLayerSpecification;
+        const layer = new SymbolStyleLayer(layerSpec);
+        layer.recalculate({zoom: 0, zoomHistory: {} as ZoomHistory} as EvaluationParameters, []);
+
+        const tileId = new OverscaledTileID(1, 0, 1, 0, 0);
+        tileId.terrainRttPosMatrix32f = mat4.create();
+        const programMock = new Program(null, null, null, null, null, null, null, null);
+        (painterMock.useProgram as Mock).mockReturnValue(programMock);
+        const bucketMock = new SymbolBucket(null);
+        bucketMock.icon = {
+            programConfigurations: {
+                get: () => { }
+            },
+            segments: {
+                get: () => [1]
+            },
+            hasVisibleVertices: true
+        } as any;
+        bucketMock.iconSizeData = {
+            kind: 'constant',
+            layoutSize: 1
+        };
+        const tile = new Tile(tileId, 256);
+        tile.tileID = tileId;
+        tile.imageAtlasTexture = {
+            bind: () => { }
+        } as any;
+        (tile.getBucket as Mock).mockReturnValue(bucketMock);
+        const sourceCacheMock = new SourceCache(null, null, null);
+        (sourceCacheMock.getTile as Mock).mockReturnValue(tile);
+        sourceCacheMock.map = {showCollisionBoxes: false} as any as Map;
+        painterMock.style = {
+            map: {},
+            projection: new MercatorProjection()
+        } as any as Style;
+
+        const renderOptions: RenderOptions = {isRenderingToTexture: false, isRenderingGlobe: false};
+        const s = pixelsToTileUnits(tile, 1, painterMock.transform.zoom);
+
+        const pitchedLabelPlaneMatrix = getPitchedLabelPlaneMatrix(true, painterMock.transform, s);
+        const pitchedLabelPlaneMatrixInverse = mat4.create();
+        mat4.invert(pitchedLabelPlaneMatrixInverse, pitchedLabelPlaneMatrix);
+        const translate: [number, number] = [0, 0]
+        const translateAnchor = 'map'
+        const translation = translatePosition(painterMock.transform, tile, translate, translateAnchor);
+
+        updateLineLabels(bucketMock, painterMock, true, pitchedLabelPlaneMatrix, pitchedLabelPlaneMatrixInverse, false, false, true, tileId.toUnwrapped(), painterMock.transform.width, painterMock.transform.height, translate, (x: number, y: number) => 0)
+        // updateLineLabels(bucket, painter, isText, pitchedLabelPlaneMatrix, pitchedLabelPlaneMatrixInverse, pitchWithMap, keepUpright, rotateToLine, coord.toUnwrapped(), transform.width, transform.height, translation, getElevation);
+
+    })
+})

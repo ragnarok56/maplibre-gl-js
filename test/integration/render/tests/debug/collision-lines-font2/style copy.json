@@ -1,0 +1,148 @@
+{
+    "version": 8,
+    "metadata": {
+        "test": {
+            "collisionDebug": false,
+            "width": 512,
+            "height": 128
+        }
+    },
+    "center": [
+        5,
+        -2
+    ],
+    "zoom": 3.2,
+    "sources": {
+        "geojson": {
+            "type": "geojson",
+            "maxzoom": 5,
+            "data": {
+                "type": "FeatureCollection",
+                "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "type": "shape"
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [ [
+                            [ -10, 2 ],
+                            [ -10, -2 ],
+                            [ 0, -2 ],
+                            [ -5, 2 ],
+                            [ -10, 2 ]
+                        ] ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "type": "text"
+                    },
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [ -10, 0 ],
+                            [ -5, -1 ],
+                            [ 0, -1 ],
+                            [ 5, -1 ],
+                            [ 6, -1 ],
+                            [ 7, -2 ],
+                            [ 8, -2 ],
+                            [ 10, -1 ],
+                            [ 15, -2 ],
+                            [ 20, 0 ],
+                            [ 50, -1 ],
+                            [ 100, -2 ],
+                            [ 150, -1 ],
+                            [ 200, 0 ],
+                            [ 250, 1 ],
+                            [ 300, -2 ]
+                        ]
+                    }
+
+                }]
+            }
+        }
+    },
+    "glyphs": "local://glyphs/{fontstack}/{range}.pbf",
+    "layers": [
+        {
+            "id": "background",
+            "type": "background",
+            "paint": {
+                "background-color": "white"
+            }
+        },
+        {
+            "id": "text",
+            "type": "symbol",
+            "source": "geojson",
+            "filter": [
+                "==",
+                "type",
+                "text"
+            ],
+            "layout": {
+                "text-field": "Kiziltashskiy Liman\nKiziltashskiy Limannnn\nimannn\nK\nKiziltashskiy Limannn",
+                "text-font": [
+                    "Open Sans Semibold",
+                    "Arial Unicode MS Bold"
+                ],
+                "symbol-spacing": 350,
+                "symbol-placement": "line",
+                "text-letter-spacing": 0.2,
+                "text-max-width": 5,
+                "text-rotation-alignment": "map",
+                "text-size": 14
+            },
+            "paint": {
+                "text-color": "#74aee9",
+                "text-halo-color": "rgba(255,255,255,0.7)",
+                "text-halo-width": 1.5
+            }
+        },
+        {
+            "id": "text-line",
+            "type": "line",
+            "source": "geojson",
+            "filter": [
+                "==",
+                "type",
+                "text"
+            ],
+            "paint": {
+              "line-width": 1,
+              "line-color": "black"
+            }
+        },
+        {
+            "id": "shape-line",
+            "type": "line",
+            "source": "geojson",
+            "filter": [
+                "==",
+                "type",
+                "shape"
+            ],
+            "paint": {
+              "line-width": 5,
+              "line-color": "blue"
+            }
+        },
+        {
+            "id": "shape-fill",
+            "type": "fill",
+            "source": "geojson",
+            "filter": [
+                "==",
+                "type",
+                "shape"
+            ],
+            "paint": {
+              "fill-color": "blue"
+            }
+        }
+    ]
+}

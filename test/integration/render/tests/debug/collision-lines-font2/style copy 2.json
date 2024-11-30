@@ -1,0 +1,77 @@
+{
+    "version": 8,
+    "metadata": {
+        "test": {
+            "collisionDebug": false,
+            "width": 512,
+            "height": 512
+        }
+    },
+    "center": [
+        36.94501,
+        45.12257
+    ],
+    "zoom": 12,
+    "sources": {
+      "mapbox": {
+        "type": "vector",
+        "maxzoom": 13,
+        "tiles": [
+            "local://tiles/glyph-placement/{z}-{x}-{y}.mvt"
+        ]
+      }
+    },
+    "glyphs": "local://glyphs/{fontstack}/{range}.pbf",
+    "layers": [
+        {
+            "id": "background",
+            "type": "background",
+            "paint": {
+                "background-color": "white"
+            }
+        },
+        {
+            "id": "text",
+            "type": "symbol",
+            "source": "mapbox",
+            "source-layer": "water_name",
+            "filter": [
+                "==",
+                "class",
+                "lake"
+            ],
+            "layout": {
+                "text-field": "{name_int}\n{name}",
+                "text-font": [
+                    "NotoSansBold"
+                ],
+                "symbol-spacing": 350,
+                "symbol-placement": "line",
+                "text-letter-spacing": 0.2,
+                "text-max-width": 5,
+                "text-rotation-alignment": "map",
+                "text-size": 14
+            },
+            "paint": {
+                "text-color": "#74aee9",
+                "text-halo-color": "rgba(255,255,255,0.7)",
+                "text-halo-width": 1.5
+            }
+        },
+        {
+            "id": "text-line",
+            "type": "line",
+            "source": "mapbox",
+            "source-layer": "water_name",
+            "filter": [
+                "==",
+                "class",
+                "lake"
+            ],
+            "paint": {
+              "line-width": 1,
+              "line-color": "black"
+            }
+        }
+    ]
+}
